@@ -1,0 +1,123 @@
+Ext.define('Rally.technicalservices.prbDashboard.Template',{
+    extend: 'Ext.XTemplate',
+
+    tbdText: 'TBD',
+    prbView: 'prb',
+    footerLeft: "Robert W. Baird Confidential",
+    footerCenter: 'Project Health Key: <span style="text-decoration:underline;"><b>T</b></span>imeline, <span style="text-decoration:underline;"><b>S</b></span>cope, <span style="text-decoration:underline;"><b>Q</b></span>uality, <span style="text-decoration:underline;"><b>R</b></span>esources, <span style="text-decoration:underline;"><b>B</b></span>udget Spend, <span style="text-decoration:underline;"><b>C</b></span>hange',
+
+    getHealthColor: function(field, values){
+        var re = /color=\"(.*)\"/i,
+            color = values[field] || '#FFFFFF',
+            match = color.match(re);
+
+        if (match && match.length > 1){
+            color = match[1];
+        }
+        return color;
+    },
+
+    getProjectTitle: function(values){
+        var parent = this.noParentString;
+
+        if (values.Parent){
+            parent = values.Parent.Name || parent;
+        }
+        return this.getStringValue(parent + ' - ' + values.Name);
+    },
+    getFormattedDate: function(field, values){
+        if (field && values[field]){
+            var dt = Rally.util.DateTime.fromIsoString(values[field]);
+            if (dt){
+                return Rally.util.DateTime.format(dt, 'M Y');
+            }
+        }
+        return null;
+    },
+    getStringValue: function(text){
+        if (text){
+            return Ext.String.ellipsis(text, this.maxChars, true);
+        }
+        return '&nbsp;';
+
+    },
+    getTitleRowSpan: function(){
+        if (this.showPRBView()){
+            return 3;
+        }
+        return 2;
+    },
+    showPRBView: function(){
+        return this.prbView === 'prb';
+    },
+    getCurrentDate: function(){
+        return Rally.util.DateTime.formatWithDefault(new Date());
+    },
+    constructor: function(config) {
+       var templateConfig = [
+           '<tpl>',
+        '<table class="prbtable" id="prb-table">',
+                '<thead><tr style="border:0;"><th colspan="10" class="prbheader">Executive Dashboard - Portfolio Highlights<br/>Status as of: {[this.getCurrentDate()]}</th></tr><tr>',
+                    '<th class="prb" width="25%">BU/CRG - Project Title</th>',
+                    '<th class="prb" width="25%">Sponsors (S), (EC)</br>Project Manager (PM), BU Lead (BL)</th>',
+                    '<th class="prb" width="15%">Start Date (S)</br>Release (R)</br>End Date (E)</th>',
+                    '<th class="prb" width="20%">Next Key Milestone</th>',
+                    '<th class="prb" colspan="6"><b>Project Health and Budget Spend:</b></br>(w/IT Cmte ask if needed)</th>',
+                '</tr></thead>',
+                '<tpl foreach=".">',
+                    '<tbody><tr>',
+                        '<td class="prb" rowspan="{[this.getTitleRowSpan()]}">{[this.getProjectTitle(values)]}</td>',
+                        '<td class="prb" rowspan="2">',
+                            '<tpl if="values[this.sponsorField]">{[this.getStringValue(values[this.sponsorField])]} (S)</br></tpl>',
+                            '<tpl if="values[this.ecField]">{[this.getStringValue(values[this.ecField])]} (EC)</br></tpl>',
+                            '<tpl if="values[this.pmField]">{[this.getStringValue(values[this.pmField])]} (PM)</br></tpl>',
+                            '<tpl if="values[this.blField]">{[this.getStringValue(values[this.blField])]} (BL)</br></tpl>',
+                        '</td>',
+                        '<td class="prb" rowspan="2">',
+                            '<tpl if="values[this.startDateField]">{[this.getFormattedDate(this.startDateField, values)]}<tpl else>{[this.tbdText]}</tpl> (S)</br>',
+                            '<tpl if="values[this.releaseDateField]">{[this.getFormattedDate(this.releaseDateField, values)]}<tpl else>{[this.tbdText]}</tpl> (R)</br>',
+                            '<tpl if="values[this.endDateField]">{[this.getFormattedDate(this.endDateField, values)]}<tpl else>{[this.tbdText]}</tpl> (E)</br>',
+                        '</td>',
+                        '<td class="prb" rowspan="2">{[this.getStringValue(values[this.nextKeyMilestoneField])]}</td>',
+                        '<td class="prb" colspan="6"><tpl if="values[this.questionField]">{[this.getStringValue(values[this.questionField])]}</tpl></td>',
+                    '</tr>',
+                   '<tpl if="this.showPRBView()">',
+                       '<tr>',
+                           '<td class="prb fixed" style="background-color:{[this.getHealthColor(this.projectHealthField, values)]};">H</td>',
+                           '<td class="prb" colspan="5"><tpl if="values[this.budgetSpentField]">{[this.getStringValue(values[this.budgetSpentField])]}<tpl if="values[this.totalBudgetField]"> of {[this.getStringValue(values[this.totalBudgetField])]}</tpl></tpl></td>',
+                       '</tr><tr>',
+                       '<td class="prb">',
+                           '<tpl if="values[this.vsmField]">{[this.getStringValue(values[this.vsmField])]} (VSM),</tpl>',
+                           '<tpl if="values[this.sltField]">{[this.getStringValue(values[this.sltField])]} (SLT)</tpl>',
+                       '</td>',
+                       '<td class="prb">',
+                           '<tpl if="values[this.linkField]"><a href="{[values[this.linkField]]}" target="_blank">Status Report</a></tpl>',
+                       '</td>',
+                       '<td class="prb">',
+                        '</td>',
+                       '<td class="prb" style="background-color:{[this.getHealthColor(this.projectHealthTimelineField, values)]};">T</td>',
+                       '<td class="prb" style="background-color:{[this.getHealthColor(this.projectHealthScopeField, values)]};">S</td>',
+                       '<td class="prb" style="background-color:{[this.getHealthColor(this.projectHealthQualityField, values)]};">Q</td>',
+                       '<td class="prb" style="background-color:{[this.getHealthColor(this.projectHealthResourcesField, values)]};">R</td>',
+                       '<td class="prb" style="background-color:{[this.getHealthColor(this.projectHealthBudgetSpendField, values)]};">B</td>',
+                       '<td class="prb" style="background-color:{[this.getHealthColor(this.projectHealthChangeField, values)]};">C</td>',
+                    '</tr></tbody><tpl else>',  //ITC View
+                       '<tr>',
+                            '<td class="prb" style="width:2%;padding-left:0px;padding-right:0px;text-align:center;background-color:{[this.getHealthColor(this.projectHealthField, values)]};">H</td>',
+                            '<td class="prb" colspan="5"><tpl if="values[this.budgetSpentField]">{[this.getStringValue(values[this.budgetSpentField])]}<tpl if="values[this.totalBudgetField]"> of {[this.getStringValue(values[this.totalBudgetField])]}</tpl></tpl></td>',
+                       '</tr></tbody>',
+                    '</tpl>',
+                '</tpl>',
+               '<tfoot><tr style="border:0;">',
+               '<td class="fleft">{[this.footerLeft]}</td>',
+               '<td colspan="3" class="fcenter">{[this.footerCenter]}</td>',
+               '<td colspan="6" class="fright">pageNumber</td>',
+               '</tr></tfoot>',
+           '</table></tpl>'
+       ];
+
+        templateConfig.push(config);
+
+        return this.callParent(templateConfig);
+    }
+});
